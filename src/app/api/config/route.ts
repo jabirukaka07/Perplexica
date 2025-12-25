@@ -35,14 +35,16 @@ export const GET = async (req: NextRequest) => {
 
     // 如果不是管理员，过滤敏感配置
     if (!isAdmin) {
-      // 移除 scope: 'server' 的字段定义
-      fields.modelProviders = [];
+      // 保留 fields.modelProviders - 这是 provider 类型的元数据，不是敏感信息
+      // 用户需要知道可以添加哪些类型的 provider（如 OpenAI、Anthropic 等）
+
+      // 移除 search 字段定义（服务端配置）
       fields.search = [];
 
       // 清空敏感配置值（但保留结构供前端显示）
       values.modelProviders = values.modelProviders.map((p: ConfigModelProvider) => ({
         ...p,
-        config: {}, // 清空所有provider配置
+        config: {}, // 清空所有provider配置（API keys等敏感信息）
       }));
       values.search = {}; // 清空搜索配置
     }
