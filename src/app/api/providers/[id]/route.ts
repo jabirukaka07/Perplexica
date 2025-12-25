@@ -1,7 +1,8 @@
 import ModelRegistry from '@/lib/models/registry';
 import { NextRequest } from 'next/server';
+import { requireAdmin } from '@/lib/middleware/adminAuth';
 
-export const DELETE = async (
+export const DELETE = requireAdmin(async (
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) => {
@@ -22,6 +23,8 @@ export const DELETE = async (
     const registry = new ModelRegistry();
     await registry.removeProvider(id);
 
+    console.log(`[Providers] Admin deleted provider: ${id}`);
+
     return Response.json(
       {
         message: 'Provider deleted successfully.',
@@ -41,9 +44,9 @@ export const DELETE = async (
       },
     );
   }
-};
+});
 
-export const PATCH = async (
+export const PATCH = requireAdmin(async (
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) => {
@@ -67,6 +70,8 @@ export const PATCH = async (
 
     const updatedProvider = await registry.updateProvider(id, name, config);
 
+    console.log(`[Providers] Admin updated provider: ${id} (${name})`);
+
     return Response.json(
       {
         provider: updatedProvider,
@@ -86,4 +91,4 @@ export const PATCH = async (
       },
     );
   }
-};
+});

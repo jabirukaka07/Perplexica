@@ -6,6 +6,8 @@ import {
   Search,
   Sliders,
   ToggleRight,
+  ShieldCheck,
+  LogOut,
 } from 'lucide-react';
 import Preferences from './Sections/Preferences';
 import { motion } from 'framer-motion';
@@ -17,6 +19,8 @@ import Models from './Sections/Models/Section';
 import SearchSection from './Sections/Search';
 import Select from '@/components/ui/Select';
 import Personalization from './Sections/Personalization';
+import { useAdminAuth } from '@/lib/hooks/useAdminAuth';
+import AdminLoginModal from './AdminLoginModal';
 
 const sections = [
   {
@@ -26,6 +30,7 @@ const sections = [
     icon: Sliders,
     component: Preferences,
     dataAdd: 'preferences',
+    requiresAdmin: false, // 公开配置
   },
   {
     key: 'personalization',
@@ -34,6 +39,7 @@ const sections = [
     icon: ToggleRight,
     component: Personalization,
     dataAdd: 'personalization',
+    requiresAdmin: false, // 公开配置
   },
   {
     key: 'models',
@@ -42,6 +48,7 @@ const sections = [
     icon: BrainCog,
     component: Models,
     dataAdd: 'modelProviders',
+    requiresAdmin: true, // 需要管理员权限
   },
   {
     key: 'search',
@@ -50,6 +57,7 @@ const sections = [
     icon: Search,
     component: SearchSection,
     dataAdd: 'search',
+    requiresAdmin: true, // 需要管理员权限
   },
 ];
 
@@ -64,6 +72,15 @@ const SettingsDialogue = ({
   const [config, setConfig] = useState<any>(null);
   const [activeSection, setActiveSection] = useState<string>(sections[0].key);
   const [selectedSection, setSelectedSection] = useState(sections[0]);
+  const [showAdminLogin, setShowAdminLogin] = useState(false);
+
+  // 管理员认证
+  const { isAdmin, isChecking, login, logout, getToken } = useAdminAuth();
+
+  // 根据管理员状态过滤sections
+  const visibleSections = sections.filter(
+    (section) => !section.requiresAdmin || isAdmin
+  );
 
   useEffect(() => {
     setSelectedSection(sections.find((s) => s.key === activeSection)!);
@@ -73,11 +90,19 @@ const SettingsDialogue = ({
     if (isOpen) {
       const fetchConfig = async () => {
         try {
+          const token = getToken();
+          const headers: HeadersInit = {
+            'Content-Type': 'application/json',
+          };
+
+          // 如果有管理员token，添加到请求头
+          if (token) {
+            headers['Authorization'] = `Bearer ${token}`;
+          }
+
           const res = await fetch('/api/config', {
             method: 'GET',
-            headers: {
-              'Content-Type': 'application/json',
-            },
+            headers,
           });
 
           const data = await res.json();
@@ -93,7 +118,7 @@ const SettingsDialogue = ({
 
       fetchConfig();
     }
-  }, [isOpen]);
+  }, [isOpen, isAdmin, getToken]);
 
   return (
     <Dialog
@@ -129,7 +154,7 @@ const SettingsDialogue = ({
                   </p>
                 </button>
                 <div className="flex flex-col items-start space-y-1 mt-8">
-                  {sections.map((section) => (
+                  {visibleSections.map((section) => (
                     <button
                       key={section.dataAdd}
                       className={cn(
@@ -145,6 +170,37 @@ const SettingsDialogue = ({
                     </button>
                   ))}
                 </div>
+
+                {/* 管理员控制区 */}
+                <div className="mt-auto pt-4 border-t border-light-200 dark:border-dark-200">
+                  {!isAdmin ? (
+                    <button
+                      onClick={() => setShowAdminLogin(true)}
+                      className="flex flex-row items-center space-x-2 px-2 py-1.5 rounded-lg w-full text-xs hover:bg-blue-50 hover:dark:bg-blue-900/20 transition duration-200 text-blue-600 dark:text-blue-400"
+                    >
+                      <ShieldCheck size={16} />
+                      <p>Admin Mode</p>
+                    </button>
+                  ) : (
+                    <div className="space-y-2">
+                      <div className="px-2 py-1 rounded-lg bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800">
+                        <p className="text-[10px] text-blue-600 dark:text-blue-400 font-medium">
+                          🛡️ Administrator Mode
+                        </p>
+                      </div>
+                      <button
+                        onClick={() => {
+                          logout();
+                          toast.success('Logged out from admin mode');
+                        }}
+                        className="flex flex-row items-center space-x-2 px-2 py-1.5 rounded-lg w-full text-xs hover:bg-red-50 hover:dark:bg-red-900/20 transition duration-200 text-red-600 dark:text-red-400"
+                      >
+                        <LogOut size={16} />
+                        <p>Exit Admin</p>
+                      </button>
+                    </div>
+                  )}
+                </div>
               </div>
               <div className="w-full flex flex-col overflow-hidden">
                 <div className="flex flex-row lg:hidden w-full justify-between px-[20px] my-4 flex-shrink-0">
@@ -158,7 +214,7 @@ const SettingsDialogue = ({
                     />
                   </button>
                   <Select
-                    options={sections.map((section) => {
+                    options={visibleSections.map((section) => {
                       return {
                         value: section.key,
                         key: section.key,
@@ -197,6 +253,21 @@ const SettingsDialogue = ({
           )}
         </DialogPanel>
       </motion.div>
+
+      {/* 管理员登录弹窗 */}
+      <AdminLoginModal
+        isOpen={showAdminLogin}
+        onClose={() => setShowAdminLogin(false)}
+        onSuccess={(token, expiresAt) => {
+          login(token, expiresAt);
+          setShowAdminLogin(false);
+          // 重新加载配置以获取管理员数据
+          setIsLoading(true);
+          setTimeout(() => {
+            window.location.reload();
+          }, 500);
+        }}
+      />
     </Dialog>
   );
 };

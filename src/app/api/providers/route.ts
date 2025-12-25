@@ -1,5 +1,6 @@
 import ModelRegistry from '@/lib/models/registry';
 import { NextRequest } from 'next/server';
+import { requireAdmin } from '@/lib/middleware/adminAuth';
 
 export const GET = async (req: Request) => {
   try {
@@ -32,7 +33,7 @@ export const GET = async (req: Request) => {
   }
 };
 
-export const POST = async (req: NextRequest) => {
+export const POST = requireAdmin(async (req: NextRequest) => {
   try {
     const body = await req.json();
     const { type, name, config } = body;
@@ -51,6 +52,8 @@ export const POST = async (req: NextRequest) => {
     const registry = new ModelRegistry();
 
     const newProvider = await registry.addProvider(type, name, config);
+
+    console.log(`[Providers] Admin created provider: ${name} (${type})`);
 
     return Response.json(
       {
@@ -71,4 +74,4 @@ export const POST = async (req: NextRequest) => {
       },
     );
   }
-};
+});

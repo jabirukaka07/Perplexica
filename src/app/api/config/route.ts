@@ -2,6 +2,7 @@ import configManager from '@/lib/config';
 import ModelRegistry from '@/lib/models/registry';
 import { NextRequest, NextResponse } from 'next/server';
 import { ConfigModelProvider } from '@/lib/config/types';
+import { isAdminRequest } from '@/lib/middleware/adminAuth';
 
 type SaveConfigBody = {
   key: string;
@@ -29,9 +30,27 @@ export const GET = async (req: NextRequest) => {
       },
     );
 
+    // 检查是否是管理员请求
+    const isAdmin = isAdminRequest(req);
+
+    // 如果不是管理员，过滤敏感配置
+    if (!isAdmin) {
+      // 移除 scope: 'server' 的字段定义
+      fields.modelProviders = [];
+      fields.search = [];
+
+      // 清空敏感配置值（但保留结构供前端显示）
+      values.modelProviders = values.modelProviders.map((p: ConfigModelProvider) => ({
+        ...p,
+        config: {}, // 清空所有provider配置
+      }));
+      values.search = {}; // 清空搜索配置
+    }
+
     return NextResponse.json({
       values,
       fields,
+      isAdmin, // 告诉前端当前是否是管理员模式
     });
   } catch (err) {
     console.error('Error in getting config: ', err);
@@ -44,6 +63,16 @@ export const GET = async (req: NextRequest) => {
 
 export const POST = async (req: NextRequest) => {
   try {
+    // 检查管理员权限
+    const isAdmin = isAdminRequest(req);
+
+    if (!isAdmin) {
+      return NextResponse.json(
+        { message: 'Admin authentication required to update configuration.' },
+        { status: 403 }
+      );
+    }
+
     const body: SaveConfigBody = await req.json();
 
     if (!body.key || !body.value) {
@@ -59,6 +88,8 @@ export const POST = async (req: NextRequest) => {
 
     configManager.updateConfig(body.key, body.value);
 
+    console.log(`[Config] Admin updated config: ${body.key}`);
+
     return Response.json(
       {
         message: 'Config updated successfully.',
@@ -68,7 +99,7 @@ export const POST = async (req: NextRequest) => {
       },
     );
   } catch (err) {
-    console.error('Error in getting config: ', err);
+    console.error('Error in updating config: ', err);
     return Response.json(
       { message: 'An error has occurred.' },
       { status: 500 },

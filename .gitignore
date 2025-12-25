@@ -39,3 +39,6 @@ db.sqlite
 /searxng
 
 certificates
+
+#bamd
+_bmad/
