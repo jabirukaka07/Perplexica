@@ -27,22 +27,13 @@ export async function adminFetch(
   // 如果不跳过认证，检查并添加token
   if (!skipAuth) {
     const token = localStorage.getItem(ADMIN_TOKEN_KEY);
-    const expiryStr = localStorage.getItem(ADMIN_TOKEN_EXPIRY_KEY);
 
-    if (!token || !expiryStr) {
+    if (!token) {
       throw new Error('Admin authentication required. Please login first.');
     }
 
-    const expiry = parseInt(expiryStr, 10);
-    const now = Date.now();
-
-    // 检查token是否过期
-    if (now >= expiry) {
-      localStorage.removeItem(ADMIN_TOKEN_KEY);
-      localStorage.removeItem(ADMIN_TOKEN_EXPIRY_KEY);
-      throw new Error('Admin token expired. Please login again.');
-    }
-
+    // 不在客户端检查过期时间，让服务器验证
+    // 因为服务器的 activeSessions 可能因为重启/热重载而丢失
     // 添加Authorization头
     const headers = new Headers(fetchOptions.headers);
     headers.set('Authorization', `Bearer ${token}`);
