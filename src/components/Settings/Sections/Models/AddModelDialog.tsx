@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { ConfigModelProvider } from '@/lib/config/types';
 import { toast } from 'sonner';
+import { adminPost } from '@/lib/api/adminFetch';
 
 const AddModel = ({
   providerId,
@@ -23,20 +24,15 @@ const AddModel = ({
     e.preventDefault();
     setLoading(true);
     try {
-      const res = await fetch(`/api/providers/${providerId}/models`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          name: modelName,
-          key: modelKey,
-          type: type,
-        }),
+      const res = await adminPost(`/api/providers/${providerId}/models`, {
+        name: modelName,
+        key: modelKey,
+        type: type,
       });
 
       if (!res.ok) {
-        throw new Error('Failed to add model');
+        const errorData = await res.json().catch(() => ({}));
+        throw new Error(errorData.message || 'Failed to add model');
       }
 
       setProviders((prev) =>

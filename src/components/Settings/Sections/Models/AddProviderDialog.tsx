@@ -15,6 +15,7 @@ import {
 } from '@/lib/config/types';
 import Select from '@/components/ui/Select';
 import { toast } from 'sonner';
+import { adminPost } from '@/lib/api/adminFetch';
 
 const AddProvider = ({
   modelProviders,
@@ -62,20 +63,15 @@ const AddProvider = ({
     e.preventDefault();
     setLoading(true);
     try {
-      const res = await fetch('/api/providers', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          type: selectedProvider,
-          name: name,
-          config: config,
-        }),
+      const res = await adminPost('/api/providers', {
+        type: selectedProvider,
+        name: name,
+        config: config,
       });
 
       if (!res.ok) {
-        throw new Error('Failed to add provider');
+        const errorData = await res.json().catch(() => ({}));
+        throw new Error(errorData.message || 'Failed to add provider');
       }
 
       const data: ConfigModelProvider = (await res.json()).provider;

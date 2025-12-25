@@ -8,6 +8,7 @@ import {
   UIConfigField,
 } from '@/lib/config/types';
 import { toast } from 'sonner';
+import { adminPatch } from '@/lib/api/adminFetch';
 
 const UpdateProvider = ({
   modelProvider,
@@ -40,19 +41,14 @@ const UpdateProvider = ({
     e.preventDefault();
     setLoading(true);
     try {
-      const res = await fetch(`/api/providers/${modelProvider.id}`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          name: name,
-          config: config,
-        }),
+      const res = await adminPatch(`/api/providers/${modelProvider.id}`, {
+        name: name,
+        config: config,
       });
 
       if (!res.ok) {
-        throw new Error('Failed to update provider');
+        const errorData = await res.json().catch(() => ({}));
+        throw new Error(errorData.message || 'Failed to update provider');
       }
 
       const data: ConfigModelProvider = (await res.json()).provider;

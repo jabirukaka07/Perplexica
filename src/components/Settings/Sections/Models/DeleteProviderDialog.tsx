@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { ConfigModelProvider } from '@/lib/config/types';
 import { toast } from 'sonner';
+import { adminDelete } from '@/lib/api/adminFetch';
 
 const DeleteProvider = ({
   modelProvider,
@@ -19,15 +20,11 @@ const DeleteProvider = ({
     e.preventDefault();
     setLoading(true);
     try {
-      const res = await fetch(`/api/providers/${modelProvider.id}`, {
-        method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
+      const res = await adminDelete(`/api/providers/${modelProvider.id}`);
 
       if (!res.ok) {
-        throw new Error('Failed to delete provider');
+        const errorData = await res.json().catch(() => ({}));
+        throw new Error(errorData.message || 'Failed to delete provider');
       }
 
       setProviders((prev) => {
