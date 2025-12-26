@@ -1,45 +1,48 @@
+import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
 
 /**
  * 管理员会话管理
- * 使用内存存储活跃的管理员token（生产环境建议使用Redis）
+ * 使用 JWT Token 实现无状态认证
  */
-
-interface Session {
-  expiresAt: number;
-  createdAt: number;
-}
 
 interface LoginAttempt {
   count: number;
   resetAt: number;
 }
 
-// 活跃会话存储
-const activeSessions = new Map<string, Session>();
+interface JWTPayload {
+  type: 'admin';
+  iat?: number;
+  exp?: number;
+}
 
 // 登录尝试记录（防暴力破解）
 const loginAttempts = new Map<string, LoginAttempt>();
 
-// 定时清理过期token和登录记录
+// 定时清理过期的登录尝试记录
 setInterval(() => {
   const now = Date.now();
 
-  // 清理过期的会话token
-  for (const [token, session] of activeSessions.entries()) {
-    if (session.expiresAt < now) {
-      activeSessions.delete(token);
-      console.log(`[AdminAuth] Cleaned expired token: ${token.substring(0, 8)}...`);
-    }
-  }
-
-  // 清理过期的登录尝试记录
   for (const [ip, attempt] of loginAttempts.entries()) {
     if (attempt.resetAt < now) {
       loginAttempts.delete(ip);
     }
   }
 }, 60000); // 每分钟清理一次
+
+/**
+ * 获取 JWT Secret（从环境变量）
+ */
+function getJWTSecret(): string {
+  const secret = process.env.JWT_SECRET || process.env.ADMIN_PASSWORD;
+
+  if (!secret) {
+    throw new Error('JWT_SECRET or ADMIN_PASSWORD must be set in environment variables');
+  }
+
+  return secret;
+}
 
 /**
  * 验证管理员密码
@@ -126,88 +129,68 @@ export function clearLoginAttempts(ip: string): void {
 }
 
 /**
- * 创建新的管理员token
+ * 创建新的管理员 JWT token
  */
 export function createAdminToken(): { token: string; expiresAt: number } {
-  const token = crypto.randomBytes(32).toString('hex');
   const expiresAt = Date.now() + 24 * 60 * 60 * 1000; // 24小时
+  const secret = getJWTSecret();
 
-  activeSessions.set(token, {
-    expiresAt,
-    createdAt: Date.now(),
+  const payload: JWTPayload = {
+    type: 'admin',
+  };
+
+  const token = jwt.sign(payload, secret, {
+    expiresIn: '24h',
   });
 
-  console.log(`[AdminAuth] Created new token: ${token.substring(0, 8)}..., expires at ${new Date(expiresAt).toISOString()}`);
+  console.log(`[AdminAuth] Created new admin token, expires at: ${new Date(expiresAt).toISOString()}`);
 
   return { token, expiresAt };
 }
 
 /**
- * 验证管理员token是否有效
+ * 验证管理员 JWT token 是否有效
  */
 export function verifyAdminToken(token: string | null | undefined): boolean {
-  if (!token) return false;
-
-  const session = activeSessions.get(token);
-  if (!session) return false;
-
-  // 检查是否过期
-  if (session.expiresAt < Date.now()) {
-    activeSessions.delete(token);
+  if (!token) {
     return false;
   }
 
-  return true;
+  try {
+    const secret = getJWTSecret();
+    const decoded = jwt.verify(token, secret) as JWTPayload;
+
+    // 验证 payload 类型
+    if (decoded.type !== 'admin') {
+      console.warn('[AdminAuth] Invalid token type:', decoded.type);
+      return false;
+    }
+
+    return true;
+  } catch (error) {
+    if (error instanceof jwt.TokenExpiredError) {
+      console.log('[AdminAuth] Token expired');
+    } else if (error instanceof jwt.JsonWebTokenError) {
+      console.warn('[AdminAuth] Invalid token:', error.message);
+    } else {
+      console.error('[AdminAuth] Token verification failed:', error);
+    }
+    return false;
+  }
 }
 
 /**
- * 续期token（延长过期时间）
+ * 续期 JWT token（重新签发新token）
  */
 export function renewAdminToken(token: string): { token: string; expiresAt: number } | null {
-  const session = activeSessions.get(token);
-
-  if (!session) return null;
-
-  // 检查是否过期
-  if (session.expiresAt < Date.now()) {
-    activeSessions.delete(token);
+  // 首先验证旧 token 是否有效
+  if (!verifyAdminToken(token)) {
     return null;
   }
 
-  // 创建新token
-  const newToken = crypto.randomBytes(32).toString('hex');
-  const expiresAt = Date.now() + 24 * 60 * 60 * 1000;
+  // 验证通过，签发新 token
+  const result = createAdminToken();
+  console.log('[AdminAuth] Token renewed successfully');
 
-  // 删除旧token
-  activeSessions.delete(token);
-
-  // 保存新token
-  activeSessions.set(newToken, {
-    expiresAt,
-    createdAt: Date.now(),
-  });
-
-  console.log(`[AdminAuth] Renewed token: ${token.substring(0, 8)}... -> ${newToken.substring(0, 8)}...`);
-
-  return { token: newToken, expiresAt };
-}
-
-/**
- * 撤销token（登出时调用）
- */
-export function revokeAdminToken(token: string): boolean {
-  const deleted = activeSessions.delete(token);
-
-  if (deleted) {
-    console.log(`[AdminAuth] Revoked token: ${token.substring(0, 8)}...`);
-  }
-
-  return deleted;
-}
-
-/**
- * 获取活跃会话数量（用于监控）
- */
-export function getActiveSessionCount(): number {
-  return activeSessions.size;
+  return result;
 }

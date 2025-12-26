@@ -138,7 +138,7 @@ const AdminLoginModal = ({ isOpen, onClose, onSuccess }: AdminLoginModalProps) =
           {/* 提示信息 */}
           <div className="mt-4 p-3 rounded-lg bg-gray-50 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-600">
             <p className="text-xs text-gray-600 dark:text-gray-400">
-              <strong>Note:</strong> The admin password is configured via the <code className="px-1 py-0.5 bg-gray-200 dark:bg-gray-600 rounded">ADMIN_PASSWORD</code> environment variable. Contact your system administrator if you don't have access.
+              <strong>Note:</strong> The admin password is configured via the <code className="px-1 py-0.5 bg-gray-200 dark:bg-gray-600 rounded">ADMIN_PASSWORD</code> environment variable. Contact your system administrator if you don&apos;t have access.
             </p>
           </div>
 
