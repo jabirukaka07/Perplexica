@@ -1,0 +1,15 @@
+use_default_settings: true
+
+search:
+  formats:
+    - html
+    - json
+
+server:
+  secret_key: "searxng-perplexica-secret-key-$(date +%s)-random"
+  limiter: false
+  image_proxy: true
+
+engines:
+  - name: wolfram alpha
+    disabled: false

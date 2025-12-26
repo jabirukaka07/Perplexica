@@ -1,4 +1,3 @@
-import axios from 'axios';
 import { getSearxngURL } from './config/serverRegistry';
 
 interface SearxngSearchOptions {
@@ -40,10 +39,15 @@ export const searchSearxng = async (
   }
 
   const res = await fetch(url);
+
+  if (!res.ok) {
+    throw new Error(`SearxNG search failed: ${res.status} ${res.statusText}`);
+  }
+
   const data = await res.json();
 
-  const results: SearxngSearchResult[] = data.results;
-  const suggestions: string[] = data.suggestions;
+  const results: SearxngSearchResult[] = data.results || [];
+  const suggestions: string[] = data.suggestions || [];
 
   return { results, suggestions };
 };

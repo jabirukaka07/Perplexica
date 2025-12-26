@@ -7,6 +7,16 @@ services:
       - data:/home/perplexica/data
       - uploads:/home/perplexica/uploads
     restart: unless-stopped
+    depends_on:
+      - searxng
+
+  searxng:
+    image: searxng/searxng:latest
+    ports:
+      - '4000:8080'
+    volumes:
+      - ./searxng-settings.yml:/etc/searxng/settings.yml
+    restart: unless-stopped
 
 volumes:
   data:

@@ -567,7 +567,7 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
             createdAt: new Date(),
           },
         ]);
-        if (data.data.length > 0) {
+        if (data.data && data.data.length > 0) {
           setMessageAppeared(true);
         }
       }
