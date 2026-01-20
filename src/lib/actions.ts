@@ -1,6 +1,4 @@
-import { Message } from '@/components/ChatWindow';
-
-export const getSuggestions = async (chatHistory: Message[]) => {
+export const getSuggestions = async (chatHistory: [string, string][]) => {
   const chatModel = localStorage.getItem('chatModelKey');
   const chatModelProvider = localStorage.getItem('chatModelProviderId');
 
@@ -10,7 +8,7 @@ export const getSuggestions = async (chatHistory: Message[]) => {
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      chatHistory: chatHistory,
+      chatHistory,
       chatModel: {
         providerId: chatModelProvider,
         key: chatModel,

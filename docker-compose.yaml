@@ -1,11 +1,12 @@
 services:
   perplexica:
     image: itzcrazykns1337/perplexica:latest
+    build:
+      context: .
     ports:
       - '3000:3000'
     volumes:
       - data:/home/perplexica/data
-      - uploads:/home/perplexica/uploads
     restart: unless-stopped
     depends_on:
       - searxng
@@ -21,5 +22,3 @@ services:
 volumes:
   data:
     name: 'perplexica-data'
-  uploads:
-    name: 'perplexica-uploads'
