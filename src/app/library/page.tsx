@@ -5,6 +5,7 @@ import { formatTimeDifference } from '@/lib/utils';
 import { BookOpenText, ClockIcon, FileText, Globe2Icon } from 'lucide-react';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
+import { userFetch } from '@/lib/api/userFetch';
 
 export interface Chat {
   id: string;
@@ -22,11 +23,8 @@ const Page = () => {
     const fetchChats = async () => {
       setLoading(true);
 
-      const res = await fetch(`/api/chats`, {
+      const res = await userFetch(`/api/chats`, {
         method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
       });
 
       const data = await res.json();

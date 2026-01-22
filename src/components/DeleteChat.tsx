@@ -11,6 +11,7 @@ import {
 import { Fragment, useState } from 'react';
 import { toast } from 'sonner';
 import { Chat } from '@/app/library/page';
+import { userFetch } from '@/lib/api/userFetch';
 
 const DeleteChat = ({
   chatId,
@@ -29,11 +30,8 @@ const DeleteChat = ({
   const handleDelete = async () => {
     setLoading(true);
     try {
-      const res = await fetch(`/api/chats/${chatId}`, {
+      const res = await userFetch(`/api/chats/${chatId}`, {
         method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json',
-        },
       });
 
       if (res.status != 200) {
