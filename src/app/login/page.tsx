@@ -77,7 +77,9 @@ export default function LoginPage() {
 
       const data = await res.json();
       login(data.token, data.expiresAt);
-      router.push('/');
+      
+      // 使用强制刷新跳转，避免状态同步问题
+      window.location.href = '/';
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Login failed');
       setLoginLoading(false);

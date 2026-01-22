@@ -5,19 +5,12 @@ import configManager from '@/lib/config';
 
 // GET: 获取 Mock 用户列表
 export async function GET() {
-  // 仅在开发环境启用
-  if (process.env.NODE_ENV !== 'development') {
-    return NextResponse.json(
-      { message: 'Mock login only available in development' },
-      { status: 403 }
-    );
-  }
-
+  // 检查是否启用了 Mock 认证（优先级高于环境检查）
   const mockEnabled = configManager.getConfig('mockAuth.enabled', false);
   if (!mockEnabled) {
     return NextResponse.json(
-      { message: 'Mock authentication is not enabled', users: [] },
-      { status: 200 }
+      { message: 'Mock login only available in development' },
+      { status: 403 }
     );
   }
 
@@ -38,19 +31,12 @@ export async function GET() {
 // POST: Mock 登录
 export async function POST(req: NextRequest) {
   try {
-    // 仅在开发环境启用
-    if (process.env.NODE_ENV !== 'development') {
-      return NextResponse.json(
-        { message: 'Mock login only available in development' },
-        { status: 403 }
-      );
-    }
-
+    // 检查是否启用了 Mock 认证
     const mockEnabled = configManager.getConfig('mockAuth.enabled', false);
     if (!mockEnabled) {
       return NextResponse.json(
         { message: 'Mock authentication is not enabled' },
-        { status: 503 }
+        { status: 403 }
       );
     }
 
