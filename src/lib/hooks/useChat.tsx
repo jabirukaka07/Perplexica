@@ -740,7 +740,7 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
 
     const messageIndex = messages.findIndex((m) => m.messageId === messageId);
 
-    const res = await fetch('/api/chat', {
+    const res = await userFetch('/api/chat', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
