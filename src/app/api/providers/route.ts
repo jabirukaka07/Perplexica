@@ -1,8 +1,8 @@
 import ModelRegistry from '@/lib/models/registry';
-import { NextRequest } from 'next/server';
-import { requireAdmin } from '@/lib/middleware/adminAuth';
+import { NextRequest, NextResponse } from 'next/server';
+import { getUserFromRequest } from '@/lib/middleware/userAuth';
 
-export const GET = async (req: Request) => {
+export async function GET() {
   try {
     const registry = new ModelRegistry();
 
@@ -12,40 +12,36 @@ export const GET = async (req: Request) => {
       return !p.chatModels.some((m) => m.key === 'error');
     });
 
-    return Response.json(
-      {
-        providers: filteredProviders,
-      },
-      {
-        status: 200,
-      },
+    return NextResponse.json(
+      { providers: filteredProviders },
+      { status: 200 },
     );
   } catch (err) {
     console.error('An error occurred while fetching providers', err);
-    return Response.json(
-      {
-        message: 'An error has occurred.',
-      },
-      {
-        status: 500,
-      },
+    return NextResponse.json(
+      { message: 'An error has occurred.' },
+      { status: 500 },
     );
   }
-};
+}
 
-export const POST = requireAdmin(async (req: NextRequest) => {
+export async function POST(req: NextRequest) {
   try {
+    const user = getUserFromRequest(req);
+    if (!user || !user.isAdmin) {
+      return NextResponse.json(
+        { message: 'Admin privileges required' },
+        { status: 403 },
+      );
+    }
+
     const body = await req.json();
     const { type, name, config } = body;
 
     if (!type || !name || !config) {
-      return Response.json(
-        {
-          message: 'Missing required fields.',
-        },
-        {
-          status: 400,
-        },
+      return NextResponse.json(
+        { message: 'Missing required fields.' },
+        { status: 400 },
       );
     }
 
@@ -55,23 +51,15 @@ export const POST = requireAdmin(async (req: NextRequest) => {
 
     console.log(`[Providers] Admin created provider: ${name} (${type})`);
 
-    return Response.json(
-      {
-        provider: newProvider,
-      },
-      {
-        status: 200,
-      },
+    return NextResponse.json(
+      { provider: newProvider },
+      { status: 200 },
     );
   } catch (err) {
     console.error('An error occurred while creating provider', err);
-    return Response.json(
-      {
-        message: 'An error has occurred.',
-      },
-      {
-        status: 500,
-      },
+    return NextResponse.json(
+      { message: 'An error has occurred.' },
+      { status: 500 },
     );
   }
-});
+}

@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { NextRequest, NextResponse } from 'next/server';
 import ModelRegistry from '@/lib/models/registry';
 import { ModelWithProvider } from '@/lib/models/types';
 import SearchAgent from '@/lib/agents/search';
@@ -9,6 +10,7 @@ import db from '@/lib/db';
 import { eq } from 'drizzle-orm';
 import { chats } from '@/lib/db/schema';
 import UploadManager from '@/lib/uploads/manager';
+import { getUserFromRequest } from '@/lib/middleware/userAuth';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -73,6 +75,7 @@ const ensureChatExists = async (input: {
   sources: SearchSources[];
   query: string;
   fileIds: string[];
+  userId: string;
 }) => {
   try {
     const exists = await db.query.chats
@@ -87,6 +90,7 @@ const ensureChatExists = async (input: {
         createdAt: new Date().toISOString(),
         sources: input.sources,
         title: input.query,
+        userId: input.userId,
         files: input.fileIds.map((id) => {
           return {
             fileId: id,
@@ -100,8 +104,17 @@ const ensureChatExists = async (input: {
   }
 };
 
-export const POST = async (req: Request) => {
+export const POST = async (req: NextRequest) => {
   try {
+    // 获取当前用户
+    const user = getUserFromRequest(req);
+    if (!user) {
+      return NextResponse.json(
+        { message: 'Authentication required' },
+        { status: 401 },
+      );
+    }
+
     const reqBody = (await req.json()) as Body;
 
     const parseBody = safeValidateBody(reqBody);
@@ -230,6 +243,7 @@ export const POST = async (req: Request) => {
       sources: body.sources as SearchSources[],
       fileIds: body.files,
       query: body.message.content,
+      userId: user.userId,
     });
 
     req.signal.addEventListener('abort', () => {

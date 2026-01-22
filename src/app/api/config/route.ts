@@ -2,7 +2,7 @@ import configManager from '@/lib/config';
 import ModelRegistry from '@/lib/models/registry';
 import { NextRequest, NextResponse } from 'next/server';
 import { ConfigModelProvider } from '@/lib/config/types';
-import { isAdminRequest } from '@/lib/middleware/adminAuth';
+import { isAdminRequest } from '@/lib/middleware/userAuth';
 
 type SaveConfigBody = {
   key: string;

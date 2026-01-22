@@ -15,7 +15,7 @@ import {
 } from '@/lib/config/types';
 import Select from '@/components/ui/Select';
 import { toast } from 'sonner';
-import { adminPost } from '@/lib/api/adminFetch';
+import { adminPost } from '@/lib/api/userFetch';
 
 const AddProvider = ({
   modelProviders,

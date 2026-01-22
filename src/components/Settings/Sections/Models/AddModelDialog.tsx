@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { ConfigModelProvider } from '@/lib/config/types';
 import { toast } from 'sonner';
-import { adminPost } from '@/lib/api/adminFetch';
+import { adminPost } from '@/lib/api/userFetch';
 
 const AddModel = ({
   providerId,

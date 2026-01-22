@@ -8,7 +8,7 @@ import {
   UIConfigField,
 } from '@/lib/config/types';
 import { toast } from 'sonner';
-import { adminPatch } from '@/lib/api/adminFetch';
+import { adminPatch } from '@/lib/api/userFetch';
 
 const UpdateProvider = ({
   modelProvider,

@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { ConfigModelProvider } from '@/lib/config/types';
 import { toast } from 'sonner';
-import { adminDelete } from '@/lib/api/adminFetch';
+import { adminDelete } from '@/lib/api/userFetch';
 
 const DeleteProvider = ({
   modelProvider,
