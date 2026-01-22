@@ -19,6 +19,19 @@ class ConfigManager {
     search: {
       searxngURL: '',
     },
+    oidc: {
+      enabled: false,
+      issuer: '',
+      clientId: '',
+      clientSecret: '',
+      redirectUri: '',
+      scopes: ['openid', 'profile', 'email'],
+      adminEmails: [],
+    },
+    mockAuth: {
+      enabled: false,
+      users: [],
+    },
   };
   uiConfigSections: UIConfigSections = {
     preferences: [
@@ -168,7 +181,25 @@ class ConfigManager {
   }
 
   private migrateConfig(config: Config): Config {
-    /* TODO: Add migrations */
+    // 确保 oidc 配置存在
+    if (!config.oidc) {
+      config.oidc = {
+        enabled: false,
+        issuer: '',
+        clientId: '',
+        clientSecret: '',
+        redirectUri: '',
+        scopes: ['openid', 'profile', 'email'],
+        adminEmails: [],
+      };
+    }
+    // 确保 mockAuth 配置存在
+    if (!config.mockAuth) {
+      config.mockAuth = {
+        enabled: false,
+        users: [],
+      };
+    }
     return config;
   }
 
@@ -233,6 +264,53 @@ class ConfigManager {
           process.env[f.env] ?? f.default ?? '';
       }
     });
+
+    /* OIDC section - 从环境变量初始化 */
+    if (process.env.OIDC_ISSUER && !this.currentConfig.oidc.issuer) {
+      this.currentConfig.oidc.issuer = process.env.OIDC_ISSUER;
+    }
+    if (process.env.OIDC_CLIENT_ID && !this.currentConfig.oidc.clientId) {
+      this.currentConfig.oidc.clientId = process.env.OIDC_CLIENT_ID;
+    }
+    if (process.env.OIDC_CLIENT_SECRET && !this.currentConfig.oidc.clientSecret) {
+      this.currentConfig.oidc.clientSecret = process.env.OIDC_CLIENT_SECRET;
+    }
+    if (process.env.OIDC_REDIRECT_URI && !this.currentConfig.oidc.redirectUri) {
+      this.currentConfig.oidc.redirectUri = process.env.OIDC_REDIRECT_URI;
+    }
+    if (process.env.OIDC_ADMIN_EMAILS && this.currentConfig.oidc.adminEmails.length === 0) {
+      this.currentConfig.oidc.adminEmails = process.env.OIDC_ADMIN_EMAILS.split(',').map(e => e.trim());
+    }
+    // 如果所有必需的 OIDC 配置都存在，则启用 OIDC
+    if (
+      this.currentConfig.oidc.issuer &&
+      this.currentConfig.oidc.clientId &&
+      this.currentConfig.oidc.clientSecret
+    ) {
+      this.currentConfig.oidc.enabled = true;
+    }
+
+    /* Mock Auth - 开发环境自动启用 */
+    if (process.env.NODE_ENV === 'development') {
+      this.currentConfig.mockAuth.enabled = true;
+      // 如果没有配置 mock 用户，添加默认的
+      if (this.currentConfig.mockAuth.users.length === 0) {
+        this.currentConfig.mockAuth.users = [
+          {
+            sub: 'mock-admin-1',
+            email: 'admin@dev.local',
+            name: 'Mock Admin',
+            isAdmin: true,
+          },
+          {
+            sub: 'mock-user-1',
+            email: 'user@dev.local',
+            name: 'Mock User',
+            isAdmin: false,
+          },
+        ];
+      }
+    }
 
     this.saveConfig();
   }

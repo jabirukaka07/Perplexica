@@ -73,6 +73,30 @@ type Config = {
   search: {
     [key: string]: any;
   };
+  oidc: OIDCConfig;
+  mockAuth: MockAuthConfig;
+};
+
+type OIDCConfig = {
+  enabled: boolean;
+  issuer: string;
+  clientId: string;
+  clientSecret: string;
+  redirectUri: string;
+  scopes: string[];
+  adminEmails: string[];
+};
+
+type MockAuthConfig = {
+  enabled: boolean;
+  users: MockUser[];
+};
+
+type MockUser = {
+  sub: string;
+  email: string;
+  name: string;
+  isAdmin: boolean;
 };
 
 type EnvMap = {
@@ -106,4 +130,7 @@ export type {
   ConfigModelProvider,
   TextareaUIConfigField,
   SwitchUIConfigField,
+  OIDCConfig,
+  MockAuthConfig,
+  MockUser,
 };
