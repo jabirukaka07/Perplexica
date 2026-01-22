@@ -7,8 +7,8 @@ import {
   Search,
   Sliders,
   ToggleRight,
-  ShieldCheck,
   LogOut,
+  User,
 } from 'lucide-react';
 import Preferences from './Sections/Preferences';
 import { motion } from 'framer-motion';
@@ -20,8 +20,7 @@ import Models from './Sections/Models/Section';
 import SearchSection from './Sections/Search';
 import Select from '@/components/ui/Select';
 import Personalization from './Sections/Personalization';
-import { useAdminAuth } from '@/lib/hooks/useAdminAuth';
-import AdminLoginModal from './AdminLoginModal';
+import { useAuth } from '@/lib/hooks/useAuth';
 
 const sections = [
   {
@@ -73,10 +72,9 @@ const SettingsDialogue = ({
   const [config, setConfig] = useState<any>(null);
   const [activeSection, setActiveSection] = useState<string>(sections[0].key);
   const [selectedSection, setSelectedSection] = useState(sections[0]);
-  const [showAdminLogin, setShowAdminLogin] = useState(false);
 
-  // 管理员认证
-  const { isAdmin, isChecking, login, logout, getToken } = useAdminAuth();
+  // 用户认证
+  const { user, isAdmin, logout, getToken } = useAuth();
 
   // 根据管理员状态过滤sections
   const visibleSections = sections.filter(
@@ -189,32 +187,44 @@ const SettingsDialogue = ({
                   </a>
                 </div>
 
-                {/* 管理员控制区 */}
+                {/* 用户信息区 */}
                 <div className="mt-auto pt-4 border-t border-light-200 dark:border-dark-200">
-                  {!isAdmin ? (
-                    <button
-                      onClick={() => setShowAdminLogin(true)}
-                      className="flex flex-row items-center space-x-2 px-2 py-1.5 rounded-lg w-full text-xs hover:bg-blue-50 hover:dark:bg-blue-900/20 transition duration-200 text-blue-600 dark:text-blue-400"
-                    >
-                      <ShieldCheck size={16} />
-                      <p>Admin Mode</p>
-                    </button>
-                  ) : (
-                    <div className="space-y-2">
-                      <div className="px-2 py-1 rounded-lg bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800">
-                        <p className="text-[10px] text-blue-600 dark:text-blue-400 font-medium">
-                          🛡️ Administrator Mode
-                        </p>
+                  {user && (
+                    <div className="space-y-3 pb-2">
+                      {/* 用户信息 */}
+                      <div className="flex items-center gap-2 px-2">
+                        <div className="w-8 h-8 rounded-full bg-light-200 dark:bg-dark-200 flex items-center justify-center">
+                          <User size={16} className="text-black/60 dark:text-white/60" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs font-medium text-black/80 dark:text-white/80 truncate">
+                            {user.name || user.email}
+                          </p>
+                          <p className="text-[10px] text-black/50 dark:text-white/50 truncate">
+                            {user.email}
+                          </p>
+                        </div>
                       </div>
+                      
+                      {/* 管理员标识 */}
+                      {isAdmin && (
+                        <div className="px-2 py-1 mx-2 rounded-lg bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800">
+                          <p className="text-[10px] text-blue-600 dark:text-blue-400 font-medium text-center">
+                            Administrator
+                          </p>
+                        </div>
+                      )}
+                      
+                      {/* 登出按钮 */}
                       <button
                         onClick={() => {
                           logout();
-                          toast.success('Logged out from admin mode');
+                          toast.success('Logged out successfully');
                         }}
                         className="flex flex-row items-center space-x-2 px-2 py-1.5 rounded-lg w-full text-xs hover:bg-red-50 hover:dark:bg-red-900/20 transition duration-200 text-red-600 dark:text-red-400"
                       >
                         <LogOut size={16} />
-                        <p>Exit Admin</p>
+                        <p>Logout</p>
                       </button>
                     </div>
                   )}
@@ -271,21 +281,6 @@ const SettingsDialogue = ({
           )}
         </DialogPanel>
       </motion.div>
-
-      {/* 管理员登录弹窗 */}
-      <AdminLoginModal
-        isOpen={showAdminLogin}
-        onClose={() => setShowAdminLogin(false)}
-        onSuccess={(token, expiresAt) => {
-          login(token, expiresAt);
-          setShowAdminLogin(false);
-          // 重新加载配置以获取管理员数据
-          setIsLoading(true);
-          setTimeout(() => {
-            window.location.reload();
-          }, 500);
-        }}
-      />
     </Dialog>
   );
 };
