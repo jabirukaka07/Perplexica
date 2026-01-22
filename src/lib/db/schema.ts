@@ -3,6 +3,28 @@ import { text, integer, sqliteTable } from 'drizzle-orm/sqlite-core';
 import { Block } from '../types';
 import { SearchSources } from '../agents/search/types';
 
+// OIDC 用户扩展信息类型
+export interface OIDCProfile {
+  sub: string;
+  department?: string;
+  jobTitle?: string;
+  phone?: string;
+  [key: string]: unknown;
+}
+
+// 用户表
+export const users = sqliteTable('users', {
+  id: text('id').primaryKey(), // OIDC sub
+  email: text('email').notNull().unique(),
+  name: text('name'),
+  avatar: text('avatar'),
+  oidcProfile: text('oidcProfile', { mode: 'json' }).$type<OIDCProfile>(),
+  isAdmin: integer('isAdmin', { mode: 'boolean' }).default(false),
+  createdAt: text('createdAt').notNull(),
+  lastLoginAt: text('lastLoginAt').notNull(),
+  authProvider: text('authProvider').notNull().default('oidc'),
+});
+
 export const messages = sqliteTable('messages', {
   id: integer('id').primaryKey(),
   messageId: text('messageId').notNull(),
@@ -35,4 +57,5 @@ export const chats = sqliteTable('chats', {
   files: text('files', { mode: 'json' })
     .$type<DBFile[]>()
     .default(sql`'[]'`),
+  userId: text('userId').notNull(),
 });
