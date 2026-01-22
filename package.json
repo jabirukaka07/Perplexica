@@ -25,9 +25,10 @@
     "clsx": "^2.1.0",
     "drizzle-orm": "^0.40.1",
     "js-tiktoken": "^1.0.21",
+    "jsonwebtoken": "^9.0.3",
     "jspdf": "^3.0.4",
     "lightweight-charts": "^5.0.9",
-
+    "lucide-react": "^0.562.0",
     "mammoth": "^1.9.1",
     "markdown-to-jsx": "^7.7.2",
     "mathjs": "^15.1.0",
@@ -37,6 +38,7 @@
     "officeparser": "^5.2.2",
     "ollama": "^0.6.3",
     "openai": "^6.9.0",
+    "openid-client": "^6.8.1",
     "partial-json": "^0.1.7",
     "pdf-parse": "^2.4.5",
     "react": "^18",
@@ -54,6 +56,7 @@
   },
   "devDependencies": {
     "@types/better-sqlite3": "^7.6.12",
+    "@types/jsonwebtoken": "^9.0.10",
     "@types/jspdf": "^2.0.0",
     "@types/node": "^24.8.1",
     "@types/pdf-parse": "^1.1.4",

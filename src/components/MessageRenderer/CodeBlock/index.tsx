@@ -4,6 +4,14 @@ import { CheckIcon, CopyIcon } from '@phosphor-icons/react';
 import React, { useEffect, useMemo, useState } from 'react';
 import { useTheme } from 'next-themes';
 import SyntaxHighlighter from 'react-syntax-highlighter';
+
+// Workaround for react-syntax-highlighter type incompatibility with React 18+
+const Highlighter = SyntaxHighlighter as unknown as React.ComponentType<{
+  language: string;
+  style: Record<string, React.CSSProperties>;
+  showInlineLineNumbers?: boolean;
+  children: string;
+}>;
 import darkTheme from './CodeBlockDarkTheme';
 import lightTheme from './CodeBlockLightTheme';
 
@@ -50,13 +58,13 @@ const CodeBlock = ({
           />
         )}
       </button>
-      <SyntaxHighlighter
+      <Highlighter
         language={language}
         style={syntaxTheme}
         showInlineLineNumbers
       >
         {children as string}
-      </SyntaxHighlighter>
+      </Highlighter>
     </div>
   );
 };
